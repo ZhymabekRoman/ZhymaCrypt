@@ -102,6 +102,7 @@ Func _RunBinary($bBinaryImage, $sCommandLine = "", $sExeModule = @AutoItExe)
 			"ptr", 0, _
 			"ptr", DllStructGetPtr($tSTARTUPINFO), _
 			"ptr", DllStructGetPtr($tPROCESS_INFORMATION))
+	; Check for errors or failure
 	If @error Or Not $aCall[0] Then Return SetError(1, 0, 0) ; CreateProcess function or call to it failed
 	; Get new process and thread handles:
 	Local $hProcess = DllStructGetData($tPROCESS_INFORMATION, "Process")
