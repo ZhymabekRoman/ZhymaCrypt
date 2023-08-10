@@ -1,0 +1,8 @@
+Func _PuthEx_EndName($FilePuth)
+Local $Split = StringSplit ( $FilePuth, "\" )
+If $Split[0] = 0 Then Return $FilePuth
+	For $i = $Split[0] To $Split[0]
+	Return $Split[$i]
+	Next
+Return ""
+EndFunc

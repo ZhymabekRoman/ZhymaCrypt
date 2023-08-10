@@ -1,0 +1,67 @@
+
+
+
+; #FUNCTION# ;=================================================================================
+; Имя функции ...: _StartUp
+; Описание ........: Добавление или удаление автозагрузки в реестре
+; Синтаксис.......: _StartUp ( [$flag = 0 [, $sName = '' [, $sPathRun = '' [, $sArgs = '' [, $sDesc = '' [, $sIcon = '' [, $iIconNum = 0 [, $state = 0]]]]]]]] )
+; Параметры:
+;		$flag - Указывает вариант автозагрузки. Может быть комбинацией следующих значений:
+;                  |1 - Реестр, иначе ярлык
+;                  |2 - Для всех пользователей, иначе для текущего
+;                  |4 - Одноразовый запуск (RunOnce), иначе при каждой загрузке (только для реестра)
+;                  |8 - Одноразовый запуск (RunOnceEx), иначе при каждой загрузке (только для реестра)
+;                  |16 - Не перезаписывать
+;                  |32 - Удалить (Требует флаги, с которыми был создан и параметр $sName, остальные игнорирует)
+;		$sName - Имя параметра реестра или ярлыка. По умолчанию "" пустая строка, что означает имя текущего скрипта
+;		$sPathRun - Путь к запускаемому файлу. По умолчанию "" пустая строка, что означает полный путь к текущему скрипту
+;		$sArgs - Параметры запуска, по умолчанию "" - пустая строка
+;		$sDesc - Описание, отображается во всплывающей подсказке (не учитывается для реестра)
+;		$sIcon - Имя или путь к файлу с иконкой (ico, dll, exe и др.). (не учитывается для реестра)
+;		$iIconNum - Номер иконки для использования (обычно 0)
+;		$state - Состояние окна при запуске
+; Возвращаемое значение: Успешно - 1
+;					Неудачно - 0. При добавлении/удалении в реестре ошибки повторяют значения ошибок соответствующих функций. Дополнительно @error = 4, если не удалось перезаписать ярлык или параметр в реестре при использовании флага "не перезаписывать"
+; Автор ..........: AZJIO
+; Примечания ..: Флаг удаления ставится с той же комбинацией флагов, что и создавался, иначе не сработает. Параметры, начиная с $sDesc заканчивая $state используются только для ярлыка, но и для него в большинстве случаев они является излишними. Флаги 4 и 8 не указывается вместе. Отличие RunOnceEx в том, что команды из этого раздела выполняются последовательно в порядке сортировки имён параметров, а также каждый следующий запуск ждёт окончания предыдущего.
+; ============================================================================================
+Func _StartUp($flag = 0, $sName = '', $sPathRun = '', $sArgs = '', $sDesc = '', $sIcon = '', $iIconNum = 0, $state = @SW_SHOWNORMAL)
+	If Not $sPathRun Then $sPathRun = @AutoItExe
+	If Not $sName Then
+		$sName = @ScriptName
+		Local $iPos = StringInStr($sName, '.', 1, -1)
+		If $iPos Then $sName = StringLeft($sName, $iPos - 1)
+	EndIf
+	If BitAND($flag, 1) Then
+		Local $sKeyName
+		If BitAND($flag, 2) Then
+			$sKeyName = 'HKLM'
+		Else
+			$sKeyName = 'HKCU'
+		EndIf
+		If @OSArch = 'X64' Then $sKeyName &= '64'
+		$sKeyName &= '\Software\Microsoft\Windows\CurrentVersion\Run'
+		If BitAND($flag, 4) Then
+			$sKeyName &= 'Once'
+		ElseIf BitAND($flag, 8) Then
+			$sKeyName &= 'OnceEx'
+		EndIf
+		If BitAND($flag, 32) Then Return RegDelete($sKeyName, $sName)
+		RegRead($sKeyName, $sName)
+		If Not @error And BitAND($flag, 16) Then Return SetError(4, 0, 0)
+		If $sArgs Then $sArgs = ' ' & $sArgs
+		Local $iRes = RegWrite($sKeyName, $sName, "REG_SZ", '"' & $sPathRun & '"' & $sArgs)
+		Return SetError(@error, 0, $iRes)
+	Else
+		Local $sPathLnk
+		If BitAND($flag, 2) Then
+			$sPathLnk = @StartupCommonDir & '\' & $sName & '.lnk'
+		Else
+			$sPathLnk = @StartupDir & '\' & $sName & '.lnk'
+		EndIf
+		If BitAND($flag, 32) Then Return FileDelete($sPathLnk)
+		If BitAND($flag, 16) And FileExists($sPathLnk) Then Return SetError(4, 0, 0)
+		Return FileCreateShortcut($sPathRun, $sPathLnk, '', $sArgs, $sDesc, $sIcon, '', $iIconNum, $state)
+	EndIf
+EndFunc   ;==>_StartUp
+

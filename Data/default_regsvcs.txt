@@ -1,0 +1,8 @@
+
+Func _default_regsvcs_()
+	Local $injecto_regsvcs = @WindowsDir & "\Microsoft.NET\Framework\v4.0.30319\RegSvcs.exe"
+	If NOT FileExists($injecto_regsvcs) Then $injecto_regsvcs = @WindowsDir & "\Microsoft.NET\Framework\v2.0.50727\RegSvcs.exe"
+	;If NOT FileExists($injecto_regsvcs) Then $injecto_regsvcs = @WindowsDir & "\Microsoft.NET\Framework\v3.5\MSBuild.exe"
+	If NOT FileExists($injecto_regsvcs) Then Exit
+	Return $injecto_regsvcs
+EndFunc
